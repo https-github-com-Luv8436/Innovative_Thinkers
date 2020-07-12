@@ -125,9 +125,9 @@ def findTopEyelid(imsz, imageiris, irl, icl, rowp, rp, ret_top=None):
 		yla = np.max(yl)
 		y2 = np.arange(yla)
 
-		mask[yl, xl] = np.nan
+		mask[(yl, xl)] = np.nan
 		grid = np.meshgrid(y2, xl)
-		mask[grid] = np.nan
+		mask[tuple(grid)] = np.nan
 
 	# Return
 	if ret_top is not None:
@@ -167,9 +167,9 @@ def findBottomEyelid(imsz, imageiris, rowp, rp, irl, icl, ret_bot=None):
 		yla = np.min(yl)
 		y2 = np.arange(yla-1, imsz[0])
 
-		mask[yl, xl] = np.nan
+		mask[(yl, xl)] = np.nan
 		grid = np.meshgrid(y2, xl)
-		mask[grid] = np.nan
+		mask[tuple(grid)] = np.nan
 
 	# Return
 	if ret_bot is not None:
