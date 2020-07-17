@@ -47,6 +47,8 @@ def main():
 		for res in result:
 			print("\t", res)
 
+		print("user "+result[0][1:3]+" identified successfully.")
+
 
 	# Time measure
 	end = time()
