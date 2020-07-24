@@ -11,8 +11,8 @@ from io import BytesIO
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--data_dir", type=str, default="../'CS 2019'/myProjects/CASIA1/1/001_1_1.jpg",
-					help="Path to the directory containing CASIA1 images.")
+parser.add_argument("--user", type=int, default="1",
+					help="folder in casia database to be uploaded on database server.")
 
 parser.add_argument("--aadhar_number", type=str, default="206201810454",
 					help="Aadhar number of user.")
@@ -20,18 +20,21 @@ parser.add_argument("--aadhar_number", type=str, default="206201810454",
 parser.add_argument("--id", type=int, default=1,
 					help="id of an image.")
 
+parser.add_argument("--party_number", type=int, default=0,
+					help="party number which voter has voted")
+
 #parser.add_argument("--n_cores", type=int, default=cpu_count(),
 #					help="Number of cores used for enrolling template.")
 
 args = parser.parse_args()
 
 
-def readImage():
+def readImage(path):
 
     fin = None
 
     try:
-        fin = open(args.data_dir, "rb")
+        fin = open(path, "rb")
         img = fin.read()
         return img
 
@@ -50,51 +53,47 @@ con = None
 
 def main():
     try:
-        con = psycopg2.connect(database='mydb', user='postgres',
-                        password='123')
+        file = open('./../../credentials.txt')
+        line = file.read()
+        con = psycopg2.connect(database='postgres', user='postgres', port = "5432",
+                        password='InnovativeThinkers' , host=line)
 
         cur = con.cursor()
 
-        #files = glob(os.path.join(args.data_dir, "*_1_*.jpg"))
-        #n_files = len(files)
-        #print("Number of files uploading into database:", n_files)
-
-        # Parallel pools to enroll templates
         print("Start uploading...")
 
-        #pools = Pool(processes=args.n_cores)
-        #for img in pools.imap(readImage, files):
-        #    pass
-        data = readImage()
-        binary = psycopg2.Binary(data)
+        path  = "./../../CASIA1/" + str(args.user) + "/"+str(args.user).zfill(3)+"_1_"
+
+        path_1 = path + "1.jpg"
+        path_2 = path + "2.jpg"
+        path_3 = path + "3.jpg"
+
+        data_1 = readImage(path_1)
+        binary_1 = psycopg2.Binary(data_1)
+        data_2 = readImage(path_2)
+        binary_2 = psycopg2.Binary(data_2)
+        data_3 = readImage(path_3)
+        binary_3 = psycopg2.Binary(data_3)
+
         aadhar = int(args.aadhar_number)
-        cur.execute("INSERT INTO sih_db(id , img , aadhar_number) VALUES (%s , %s , %s)", (args.id , binary , aadhar))
+        cur.execute("INSERT INTO sih_database(aadhar_number , party_number , status , image_1 , image_2 , image_3 ) VALUES (%s , %s , %s , %s , %s , %s)", (aadhar , args.party_number , False , binary_1 , binary_2 , binary_3))
 
-        # data = readImage()
-        # binary = psycopg2.Binary(data)
-        # cur.execute("INSERT INTO category(id , user_name , image) VALUES (%s , %s , %s)", (5 ,"rahul", binary))
-        
-        #cur.execute("SELECT * FROM category ")
-        #result = cur.fetchall()
-        #for item in result:
-        #    print("id = ",item[0] , end ="|")
-        #    print("user name = ",item[1] , end = "|")
-        #    file_jpgdata = BytesIO(item[2])
-        #    dt = Image.open(file_jpgdata)
-        #    dt.show()
-
+        j=0
         con.commit()
-        print('Image Successfully Uploaded')
 
     except psycopg2.DatabaseError as e:
 
         if con:
+            j=1
+            print('Error in Uploading Image')
             con.rollback()
 
         print(f'Error {e}')
         sys.exit(1)
 
     finally:
+        if j==0:
+            print('Image Successfully Uploaded')
 
         if con:
             con.close()

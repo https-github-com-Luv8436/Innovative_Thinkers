@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse, os
+import time as t
 #from glob import glob
-#from time import time
+from time import time
 #from multiprocessing import cpu_count, Pool
 import psycopg2
 import sys
@@ -48,39 +49,49 @@ con = None
 
 def main():
     try:
-        con = psycopg2.connect(database='mydb', user='postgres',
-                        password='123')
+        file = open('./../../credentials.txt')
+        line = file.read()
+        con = psycopg2.connect(database='postgres', user='postgres', port = "5432",
+                        password='InnovativeThinkers' , host=line)
+
 
         cur = con.cursor()
 
-        #files = glob(os.path.join(args.data_dir, "*_1_*.jpg"))
-        #n_files = len(files)
-        #print("Number of files uploading into database:", n_files)
-
-        # Parallel pools to enroll templates
         print("Loading...")
-
-        #pools = Pool(processes=args.n_cores)
-        #for img in pools.imap(readImage, files):
-        #    pass
-        #data = readImage()
-        #binary = psycopg2.Binary(data)
+        start = time()
         aadhar = int(args.aadhar_number)
-        # cur.execute("INSERT INTO sih_db(id , img , aadhar_number) VALUES (%s , %s , %s)", (args.id , binary , aadhar))
-
         
-        cur.execute("SELECT * FROM sih_db WHERE id=%(id)s",{'id':args.id})
+        cur.execute("SELECT * FROM sih_database WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':args.aadhar_number})
         item = cur.fetchone()
         if item == None:
-            print("invalid id.")
+            print("invalid aadhar number!!!!, Please enter the valid aadhar number.")
             return
         print("id = ",item[0])
-        print("aadhar number = ",item[2])
-        file_jpgdata = BytesIO(item[1])
-        dt = Image.open(file_jpgdata)
-        dt.show()
+        print("aadhar number = ",item[1])
+        print("vote status = ", item[3])
+        print("voted party number", item[4])
+
+        file_jpgdata_1 = BytesIO(item[2])
+        dt_1 = Image.open(file_jpgdata_1)
+        dt_1.show()
+        t.sleep(6)
+
+        file_jpgdata_2 = BytesIO(item[5])
+        dt_2 = Image.open(file_jpgdata_2)
+        dt_2.show()
+        t.sleep(6)
+
+        file_jpgdata_3 = BytesIO(item[6])
+        dt_3 = Image.open(file_jpgdata_3)
+        dt_3.show()
+
+        end = time()
+        print('\n>>> Time taken for loading images: {} [s]\n'.format(end-start))
+       
 
         con.commit()
+
+        
 
     except psycopg2.DatabaseError as e:
 

@@ -1,7 +1,7 @@
 ##-----------------------------------------------------------------------------
 ##  Import
 ##-----------------------------------------------------------------------------
-import cv2
+import cv2 , os ,sys
 
 from fnc.segment import segment
 from fnc.normalize import normalize
@@ -45,6 +45,10 @@ def extractFeature(im_filename, eyelashes_thres=80, use_multiprocess=True):
 	# Perform segmentation
 	# path = 'C:\\Users\\luvku\\CS 2019\\SIH\\sih2020\\sih\\test\\Iris-Recognition\\CASIA1\\1\\' + im_filename
 	# print('path = ',path)
+	if not os.path.exists(im_filename):
+		print('invalid image path!!!')
+		sys.exit()
+
 	im = cv2.imread(im_filename, 0)
 	ciriris, cirpupil, imwithnoise = segment(im, eyelashes_thres, use_multiprocess)
 

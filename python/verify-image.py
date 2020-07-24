@@ -4,6 +4,7 @@
 ##  Import
 ##-----------------------------------------------------------------------------
 import argparse, os
+import shutil
 from glob import glob
 from time import time
 from tqdm import tqdm
@@ -31,7 +32,7 @@ parser.add_argument("--id", type=int, default=1,
 parser.add_argument("--thres", type=float, default=0.38,
 					help="Threshold for matching.")
 
-parser.add_argument("--temp_dir", type=str, default="./templates/CASIA1/",
+parser.add_argument("--temp_dir", type=str, default="./iris_images",
 					help="Path to the directory containing templates.")
 
 parser.add_argument("--extracted_dir", type=str, default="./extracted_images/mixtest/",
@@ -159,6 +160,11 @@ def main():
         end = time()
         print('\n>>> User verification time: {} [s]\n'.format(end-start))
 
+        try:
+            shutil.rmtree(args.temp_dir)
+            shutil.rmtree(args.extracted_dir)
+        except OSError as e:
+            print ("Error: %s - %s." % (e.filename, e.strerror))
         #pools = Pool(processes=args.n_cores)
         #for img in pools.imap(readImage, files):
         #    pass
@@ -187,5 +193,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-#  basic command for running the program 
-#  python verify-image.py --id=2 --aadhar_number=100 --temp_dir=./template
