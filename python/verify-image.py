@@ -41,6 +41,12 @@ parser.add_argument("--extracted_dir", type=str, default="./extracted_images/mix
 parser.add_argument("--n_cores", type=int, default=cpu_count(),
 					help="Number of cores used for enrolling template.")
 
+parser.add_argument("--party_number", type=int, default=0,
+					help="Party to which vote is casted.")
+
+parser.add_argument("--status", type=bool, default=False,
+					help="status of voter.")
+
 
 args = parser.parse_args()
 
@@ -68,41 +74,50 @@ con = None
 
 
 def pool_func(file):
-	template , mask , _ = extractFeature(file , use_multiprocess=False)
-	basename = os.path.basename(file)
-	out_file = os.path.join(args.extracted_dir , "%s.mat" % (basename))
-	savemat(out_file , mdict = {'template': template , 'mask':mask})
+    template , mask , _ = extractFeature(file , use_multiprocess=False)
+    basename = os.path.basename(file)
+    out_file = os.path.join(args.extracted_dir , "%s.mat" % (basename))
+    savemat(out_file , mdict = {'template': template , 'mask':mask})
 
 def main():
     try:
-        con = psycopg2.connect(database='mydb', user='postgres',
-                        password='123')
+        file = open('./../../credentials.txt')
+        line = file.read()
+        con = psycopg2.connect(database='postgres', user='postgres', port = "5432",
+                        password='InnovativeThinkers' , host=line)
 
         cur = con.cursor()
 
-        #files = glob(os.path.join(args.data_dir, "*_1_*.jpg"))
-        #n_files = len(files)
-        #print("Number of files uploading into database:", n_files)
+
         start = time()
 
-		# Check the existence of temp_dir
         if not os.path.exists(args.temp_dir):
         	print("makedirs", args.temp_dir)
         	os.makedirs(args.temp_dir)
 
         print("Downloading images from database..... ")
-
-        cur.execute("SELECT * FROM sih_db WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':args.aadhar_number})
-        result = cur.fetchall()
-        if result == None:
+        aadhar = int(args.aadhar_number)
+        cur.execute("SELECT * FROM sih_database WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':aadhar})
+        item = cur.fetchone()
+        if item == None:
             print("invalid aadhar number.")
             return
-
+        if item[3]==True:
+            print('you cannot caste the vote again.')
+            return 
         # saving the results
-        for item in result:
-            file_jpgdata = BytesIO(item[1])
-            dt = Image.open(file_jpgdata)
-            dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(item[2])+".jpg")
+
+        file_jpgdata = BytesIO(item[2])
+        dt = Image.open(file_jpgdata)
+        dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(1)+".jpg")
+
+        file_jpgdata = BytesIO(item[5])
+        dt = Image.open(file_jpgdata)
+        dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(2)+".jpg")
+
+        file_jpgdata = BytesIO(item[6])
+        dt = Image.open(file_jpgdata)
+        dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(3)+".jpg")
 
         end = time()
         print('\n>>> Time taken for loading images: {} [s]\n'.format(end-start))
@@ -125,6 +140,7 @@ def main():
             for item in f:
                 if '.jpg' in item:
                     files_in_dir.append(os.path.join(r, item))
+
         pools = Pool(processes=args.n_cores)
         for file in pools.imap(pool_func, files_in_dir):
             pass
@@ -139,7 +155,7 @@ def main():
 
         start = time()
 
-        template, mask, file = extractFeature(args.file)
+        template, mask, file = extractFeature(args.file , use_multiprocess=False)
 
         # Matching
 
@@ -154,26 +170,19 @@ def main():
 
         else:
             print('>>> {} samples matched (descending reliability):'.format(len(result)))
+            sql_query = "UPDATE sih_database SET status=%s , party_number=%s WHERE aadhar_number=%s "
+            cur.execute(sql_query , (args.status , args.party_number , args.aadhar_number))
             for res in result:
                 print("\t", res)
 
-        end = time()
-        print('\n>>> User verification time: {} [s]\n'.format(end-start))
+            print("user "+result[0][1:3]+" identified successfully.")
 
         try:
             shutil.rmtree(args.temp_dir)
             shutil.rmtree(args.extracted_dir)
         except OSError as e:
             print ("Error: %s - %s." % (e.filename, e.strerror))
-        #pools = Pool(processes=args.n_cores)
-        #for img in pools.imap(readImage, files):
-        #    pass
-        #data = readImage()
-        #binary = psycopg2.Binary(data)
-        aadhar = int(args.aadhar_number)
-        # cur.execute("INSERT INTO sih_db(id , img , aadhar_number) VALUES (%s , %s , %s)", (args.id , binary , aadhar))
-
-
+        
         con.commit()
 
     except psycopg2.DatabaseError as e:
@@ -192,4 +201,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
