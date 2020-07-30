@@ -26,6 +26,9 @@ parser.add_argument("--party_number", type=int, default=0,
 parser.add_argument("--status", type=bool, default=False,
 					help="voter casted the vote or not")
 
+parser.add_argument("--constituency", type=int, default="0565",
+					help="constituency of the voter from where he has casted the vote")
+
 #parser.add_argument("--n_cores", type=int, default=cpu_count(),
 #					help="Number of cores used for enrolling template.")
 
@@ -79,7 +82,7 @@ def main():
         binary_3 = psycopg2.Binary(data_3)
 
         aadhar = int(args.aadhar_number)
-        cur.execute("INSERT INTO sih_database(aadhar_number , party_number , status , image_1 , image_2 , image_3 ) VALUES (%s , %s , %s , %s , %s , %s)", (aadhar , args.party_number , args.status , binary_1 , binary_2 , binary_3))
+        cur.execute("INSERT INTO sih_database(aadhar_number , party_number , status , image_1 , image_2 , image_3 , constituency) VALUES (%s , %s , %s , %s , %s , %s , %s)", (aadhar , args.party_number , args.status , binary_1 , binary_2 , binary_3 , args.constituency))
 
         j=0
         con.commit()
