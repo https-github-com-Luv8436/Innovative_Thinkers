@@ -22,7 +22,7 @@ parser.add_argument("--party_number", type=int, default=0,
 parser.add_argument("--status", type=bool, default=False,
 					help="voter casted the vote or not")
 
-parser.add_argument("--constituency", type=int, default="0565",
+parser.add_argument("--constituency", type=int, default="0",
 					help="constituency of the voter from where he has casted the vote")
 
 
@@ -77,20 +77,20 @@ def main():
 
         # encrypt the credentials
         encoded_party_number = str(args.party_number).encode()
-        encrypted_party_number = f.encrypt(party_number)
-        party_number = int.from_bytes(testBytes, byteorder='big')
+        encrypted_party_number = f.encrypt(encoded_party_number)
+        party_number = int.from_bytes(encrypted_party_number, byteorder='big')
 
         encoded_status = str(args.status).encode()
-        encrypted_status = f.encrypt(status)
-        status = int.from_bytes(testBytes, byteorder='big')
+        encrypted_status = f.encrypt(encoded_status)
+        status = int.from_bytes(encrypted_status, byteorder='big')
 
         encoded_constituency = str(args.constituency).encode()
-        encrypted_constituency = f.encrypt(constituency)
-        constituency = int.from_bytes(testBytes, byteorder='big')
+        encrypted_constituency = f.encrypt(encoded_constituency)
+        constituency = int.from_bytes(encrypted_constituency, byteorder='big')
 
-        encoded_aadhar_number = str(args.aadhar_number).encode()
-        encrypted_aadhar_number = f.encrypt(aadhar_number)
-        aadhar_number = int.from_bytes(encrypted, byteorder='big')
+        encoded_aadhar_number = args.aadhar_number.encode()
+        encrypted_aadhar_number = f.encrypt(encoded_aadhar_number)
+        aadhar_number = int.from_bytes(encrypted_aadhar_number, byteorder='big')
         
 
         path  = "./../CASIA1/" + str(args.user) + "/"+str(args.user).zfill(3)+"_1_"
@@ -106,7 +106,7 @@ def main():
         data_3 = readImage(path_3)
         encoded_binary_3 = f.encrypt(data_3)
 
-        cur.execute("INSERT INTO sih_database(aadhar_number , party_number , status , image1 , image2 , image3 , constituency) VALUES (%s , %s , %s , %s , %s , %s , %s)", (aadhar_number , party_number , status , encoded_binary_1 , encoded_binary_2 , encoded_binary_3 , constituency))
+        cur.execute("INSERT INTO sih_database(aadhar_number , constituency , party_number , status , image1 , image2 , image3 ) VALUES (%s , %s , %s , %s , %s , %s , %s)", (aadhar_number , constituency , party_number , status , encoded_binary_1 , encoded_binary_2 , encoded_binary_3 ))
 
         j=0
         con.commit()

@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser()
 
 
 
-parser.add_argument("--file", type=str, default="./../../CASIA1/1/001_2_4.jpg" ,
+parser.add_argument("--file", type=str, default="./../CASIA1/1/001_2_4.jpg" ,
 					help="Path to the file that you want to verify.")
 
 parser.add_argument("--thres", type=float, default=0.38,
@@ -62,7 +62,7 @@ def load_key():
 
 def main():
     try:
-        file = open('./../../credentials.txt')
+        file = open('./../credentials.txt')
         line = file.read()
         con = psycopg2.connect(database='postgres', user='postgres', port = "5432",
                         password='InnovativeThinkers' , host=line)
@@ -78,24 +78,28 @@ def main():
         aadhar_number = demo1.aadhar()
 
         # encrypt the credentials
-        party_number = str(args.party_number).encode()
-        status_true = str(True).encode()
-        constituency = str(args.constituency).encode()
+        encoded_party_number = str(args.party_number).encode()
+        encoded_status_true = str(True).encode()
+        encoded_constituency = str(args.constituency).encode()
+        encoded_aadhar_number = str(aadhar_number).encode()
 
-        encrypted_party_number = f.encrypt(party_number)
-        encrypted_status_true = f.encrypt(status_true)
-        encrypted_constituency = f.encrypt(constituency)
 
+        encrypted_party_number = f.encrypt(encoded_party_number)
+        encrypted_status_true = f.encrypt(encoded_status_true)
+        encrypted_constituency = f.encrypt(encoded_constituency)
+        encrypted_aadhar_number = f.encrypt(encoded_aadhar_number)
+
+        party_number = int.from_bytes(encrypted_party_number, byteorder='big')
+        status_true = int.from_bytes(encrypted_status_true, byteorder='big')
+        constituency = int.from_bytes(encrypted_constituency, byteorder='big')
+        aadhar_number = int.from_bytes(encrypted_aadhar_number, byteorder='big')
 
         cur.execute("SELECT * FROM sih_database WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':aadhar_number})
         item = cur.fetchone()
         if item == None:
             print("invalid aadhar number.")
             return
-
-        binary_status = f.decrypt(item[3])
-        status = binary_status.decode()
-        if status==True:
+        if status_true == item[4]:
             print('You cannot caste the vote again.')
             return 
         # saving the results
@@ -146,7 +150,7 @@ def main():
 
         else:
             sql_query = "UPDATE sih_database SET status=%s , party_number=%s , constituency=%s WHERE aadhar_number=%s "
-            cur.execute(sql_query , (encrypted_status_true , encrypted_party_number , encrypted_constituency , aadhar_number))
+            cur.execute(sql_query , (status_true , party_number , constituency , aadhar_number))
 
             print("Vote successfully casted with aadhar number", aadhar)
             print('Thank You for casting your vote.')
