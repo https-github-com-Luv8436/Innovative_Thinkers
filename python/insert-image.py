@@ -78,19 +78,19 @@ def main():
         # encrypt the credentials
         encoded_party_number = str(args.party_number).encode()
         encrypted_party_number = f.encrypt(encoded_party_number)
-        party_number = int.from_bytes(encrypted_party_number, byteorder='big')
+        party_number = encrypted_party_number.decode()
 
         encoded_status = str(args.status).encode()
         encrypted_status = f.encrypt(encoded_status)
-        status = int.from_bytes(encrypted_status, byteorder='big')
+        status = encrypted_status.decode()
 
         encoded_constituency = str(args.constituency).encode()
         encrypted_constituency = f.encrypt(encoded_constituency)
-        constituency = int.from_bytes(encrypted_constituency, byteorder='big')
+        constituency = encrypted_constituency.decode()
 
         encoded_aadhar_number = args.aadhar_number.encode()
         encrypted_aadhar_number = f.encrypt(encoded_aadhar_number)
-        aadhar_number = int.from_bytes(encrypted_aadhar_number, byteorder='big')
+        aadhar_number = encrypted_aadhar_number.decode()
         
 
         path  = "./../CASIA1/" + str(args.user) + "/"+str(args.user).zfill(3)+"_1_"

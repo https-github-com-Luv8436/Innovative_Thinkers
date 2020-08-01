@@ -75,47 +75,63 @@ def main():
         key = load_key()
         f= Fernet(key)
 
-        aadhar_number = demo1.aadhar()
+        aadhar = demo1.aadhar()
 
         # encrypt the credentials
         encoded_party_number = str(args.party_number).encode()
         encoded_status_true = str(True).encode()
         encoded_constituency = str(args.constituency).encode()
-        encoded_aadhar_number = str(aadhar_number).encode()
 
 
         encrypted_party_number = f.encrypt(encoded_party_number)
         encrypted_status_true = f.encrypt(encoded_status_true)
         encrypted_constituency = f.encrypt(encoded_constituency)
-        encrypted_aadhar_number = f.encrypt(encoded_aadhar_number)
 
-        party_number = int.from_bytes(encrypted_party_number, byteorder='big')
-        status_true = int.from_bytes(encrypted_status_true, byteorder='big')
-        constituency = int.from_bytes(encrypted_constituency, byteorder='big')
-        aadhar_number = int.from_bytes(encrypted_aadhar_number, byteorder='big')
+        party_number = encrypted_party_number.decode()
+        status_true = encrypted_status_true.decode()
+        constituency = encrypted_constituency.decode()
 
-        cur.execute("SELECT * FROM sih_database WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':aadhar_number})
-        item = cur.fetchone()
-        if item == None:
+        cur.execute("SELECT * FROM sih_database")
+        items = cur.fetchall()
+        if items == None:
             print("invalid aadhar number.")
             return
-        if status_true == item[4]:
-            print('You cannot caste the vote again.')
-            return 
-        # saving the results
+        
 
-        file_jpgdata = BytesIO(f.decrypt(item[5]))
+        def find_user(items):
+            for item in items:
+                aadhar_text = item[1]
+                binary_aadhar_text = aadhar_text.encode()
+                decrypted_aadhar_number = f.decrypt(binary_aadhar_text)
+                if int(decrypted_aadhar_number.decode()) == aadhar:
+                    return item
+
+        user = find_user(items)
+        id = user[0]
+
+
+        status_text = user[4]
+        decrypted_status = f.decrypt(status_text.encode())
+        decrypted_status_string = decrypted_status.decode()
+        if decrypted_status_string == 'True':
+            print("You cannot caste your vote again!!!")
+            return
+
+        
+
+
+        file_jpgdata = BytesIO(f.decrypt(bytes(user[5])))
         dt = Image.open(file_jpgdata)
-        dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(1)+".jpg")
+        dt = dt.save(args.temp_dir+"/"+str(user[0])+"-"+str(1)+".jpg")
 
-        file_jpgdata = BytesIO(f.decrypt(item[6]))
+        file_jpgdata = BytesIO(f.decrypt(bytes(user[6])))
         dt = Image.open(file_jpgdata)
-        dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(2)+".jpg")
+        dt = dt.save(args.temp_dir+"/"+str(user[0])+"-"+str(2)+".jpg")
 
-        file_jpgdata = BytesIO(f.decrypt(item[7]))
+        file_jpgdata = BytesIO(f.decrypt(bytes(user[7])))
         dt = Image.open(file_jpgdata)
-        dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(3)+".jpg")
-
+        dt = dt.save(args.temp_dir+"/"+str(user[0])+"-"+str(3)+".jpg")
+        
         # Check the existence of temp_dir
         if not os.path.exists(args.extracted_dir):
             os.makedirs(args.extracted_dir)
@@ -149,8 +165,8 @@ def main():
             print('>>> No sample matched.')
 
         else:
-            sql_query = "UPDATE sih_database SET status=%s , party_number=%s , constituency=%s WHERE aadhar_number=%s "
-            cur.execute(sql_query , (status_true , party_number , constituency , aadhar_number))
+            sql_query = "UPDATE sih_database SET status=%s , party_number=%s , constituency=%s WHERE id=%s "
+            cur.execute(sql_query , (status_true , party_number , constituency , id))
 
             print("Vote successfully casted with aadhar number", aadhar)
             print('Thank You for casting your vote.')
