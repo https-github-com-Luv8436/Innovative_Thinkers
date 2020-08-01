@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse, os
-#from glob import glob
-#from time import time
-#from multiprocessing import cpu_count, Pool
 import psycopg2
 import sys
 from PIL import Image
 from io import BytesIO
+from cryptography.fernet import Fernet
+
 
 parser = argparse.ArgumentParser()
 
@@ -16,9 +15,6 @@ parser.add_argument("--user", type=int, default="1",
 
 parser.add_argument("--aadhar_number", type=str, default="206201810454",
 					help="Aadhar number of user.")
-
-parser.add_argument("--id", type=int, default=1,
-					help="id of an image.")
 
 parser.add_argument("--party_number", type=int, default=0,
 					help="party number which voter has voted")
@@ -29,8 +25,7 @@ parser.add_argument("--status", type=bool, default=False,
 parser.add_argument("--constituency", type=int, default="0565",
 					help="constituency of the voter from where he has casted the vote")
 
-#parser.add_argument("--n_cores", type=int, default=cpu_count(),
-#					help="Number of cores used for enrolling template.")
+
 
 args = parser.parse_args()
 
@@ -54,12 +49,19 @@ def readImage(path):
         if fin:
             fin.close()
 
+
+def load_key():
+    """
+    Loads the key from the current directory named `key.key`
+    """
+    return open("key.key", "rb").read()
+
 con = None
 
 
 def main():
     try:
-        file = open('./../../credentials.txt')
+        file = open('./../credentials.txt')
         line = file.read()
         con = psycopg2.connect(database='postgres', user='postgres', port = "5432",
                         password='InnovativeThinkers' , host=line)
@@ -68,21 +70,43 @@ def main():
 
         print("Start uploading...")
 
-        path  = "./../../CASIA1/" + str(args.user) + "/"+str(args.user).zfill(3)+"_1_"
+        key = load_key()
+
+        # initialize the Fernet class
+        f = Fernet(key)
+
+        # encrypt the credentials
+        encoded_party_number = str(args.party_number).encode()
+        encrypted_party_number = f.encrypt(party_number)
+        party_number = int.from_bytes(testBytes, byteorder='big')
+
+        encoded_status = str(args.status).encode()
+        encrypted_status = f.encrypt(status)
+        status = int.from_bytes(testBytes, byteorder='big')
+
+        encoded_constituency = str(args.constituency).encode()
+        encrypted_constituency = f.encrypt(constituency)
+        constituency = int.from_bytes(testBytes, byteorder='big')
+
+        encoded_aadhar_number = str(args.aadhar_number).encode()
+        encrypted_aadhar_number = f.encrypt(aadhar_number)
+        aadhar_number = int.from_bytes(encrypted, byteorder='big')
+        
+
+        path  = "./../CASIA1/" + str(args.user) + "/"+str(args.user).zfill(3)+"_1_"
 
         path_1 = path + "1.jpg"
         path_2 = path + "2.jpg"
         path_3 = path + "3.jpg"
 
         data_1 = readImage(path_1)
-        binary_1 = psycopg2.Binary(data_1)
+        encoded_binary_1 = f.encrypt(data_1)
         data_2 = readImage(path_2)
-        binary_2 = psycopg2.Binary(data_2)
+        encoded_binary_2 = f.encrypt(data_2)
         data_3 = readImage(path_3)
-        binary_3 = psycopg2.Binary(data_3)
+        encoded_binary_3 = f.encrypt(data_3)
 
-        aadhar = int(args.aadhar_number)
-        cur.execute("INSERT INTO sih_database(aadhar_number , party_number , status , image_1 , image_2 , image_3 , constituency) VALUES (%s , %s , %s , %s , %s , %s , %s)", (aadhar , args.party_number , args.status , binary_1 , binary_2 , binary_3 , args.constituency))
+        cur.execute("INSERT INTO sih_database(aadhar_number , party_number , status , image1 , image2 , image3 , constituency) VALUES (%s , %s , %s , %s , %s , %s , %s)", (aadhar_number , party_number , status , encoded_binary_1 , encoded_binary_2 , encoded_binary_3 , constituency))
 
         j=0
         con.commit()

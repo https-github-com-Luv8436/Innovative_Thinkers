@@ -15,6 +15,7 @@ from io import BytesIO
 from fnc.extractFeature import extractFeature
 from fnc.matching import matching
 import demo1
+from cryptography.fernet import Fernet
 
 parser = argparse.ArgumentParser()
 
@@ -44,9 +45,6 @@ parser.add_argument("--constituency", type=int, default=0,
 
 args = parser.parse_args()
 
-
-
-
 con = None
 
 
@@ -55,6 +53,12 @@ def pool_func(file):
     basename = os.path.basename(file)
     out_file = os.path.join(args.extracted_dir , "%s.mat" % (basename))
     savemat(out_file , mdict = {'template': template , 'mask':mask})
+
+def load_key():
+    """
+    Loads the key from the current directory named `key.key`
+    """
+    return open("key.key", "rb").read()
 
 def main():
     try:
@@ -65,39 +69,48 @@ def main():
 
         cur = con.cursor()
 
-
-        start = time()
-
         if not os.path.exists(args.temp_dir):
         	os.makedirs(args.temp_dir)
 
-        aadhar = demo1.aadhar()
-        cur.execute("SELECT * FROM sih_database WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':aadhar})
+        key = load_key()
+        f= Fernet(key)
+
+        aadhar_number = demo1.aadhar()
+
+        # encrypt the credentials
+        party_number = str(args.party_number).encode()
+        status_true = str(True).encode()
+        constituency = str(args.constituency).encode()
+
+        encrypted_party_number = f.encrypt(party_number)
+        encrypted_status_true = f.encrypt(status_true)
+        encrypted_constituency = f.encrypt(constituency)
+
+
+        cur.execute("SELECT * FROM sih_database WHERE aadhar_number=%(aadhar_number)s",{'aadhar_number':aadhar_number})
         item = cur.fetchone()
         if item == None:
             print("invalid aadhar number.")
             return
-        if item[3]==True:
+
+        binary_status = f.decrypt(item[3])
+        status = binary_status.decode()
+        if status==True:
             print('You cannot caste the vote again.')
             return 
         # saving the results
 
-        file_jpgdata = BytesIO(item[2])
+        file_jpgdata = BytesIO(f.decrypt(item[5]))
         dt = Image.open(file_jpgdata)
         dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(1)+".jpg")
 
-        file_jpgdata = BytesIO(item[5])
+        file_jpgdata = BytesIO(f.decrypt(item[6]))
         dt = Image.open(file_jpgdata)
         dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(2)+".jpg")
 
-        file_jpgdata = BytesIO(item[6])
+        file_jpgdata = BytesIO(f.decrypt(item[7]))
         dt = Image.open(file_jpgdata)
         dt = dt.save(args.temp_dir+"/"+str(item[0])+"-"+str(3)+".jpg")
-
-
-
-        # enrollment starts
-
 
         # Check the existence of temp_dir
         if not os.path.exists(args.extracted_dir):
@@ -119,9 +132,6 @@ def main():
 
         # verification process starts
 
-
-
-
         template, mask, file = extractFeature(args.file , use_multiprocess=False)
 
         # Matching
@@ -136,7 +146,7 @@ def main():
 
         else:
             sql_query = "UPDATE sih_database SET status=%s , party_number=%s , constituency=%s WHERE aadhar_number=%s "
-            cur.execute(sql_query , (True , args.party_number , args.constituency , aadhar))
+            cur.execute(sql_query , (encrypted_status_true , encrypted_party_number , encrypted_constituency , aadhar_number))
 
             print("Vote successfully casted with aadhar number", aadhar)
             print('Thank You for casting your vote.')
