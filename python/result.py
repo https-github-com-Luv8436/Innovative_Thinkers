@@ -4,10 +4,11 @@
 import psycopg2
 import sys
 from cryptography.fernet import Fernet
+import argparse, os
 
-#parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser()
 
-#parser.add_argument("--constituency", type=int, default="0" ,
+parser.add_argument("--constituency", type=int, default="0" ,
 					help="constituency for which you want to display results.")
 
 args = parser.parse_args()
