@@ -9,6 +9,7 @@ import sys
 from PIL import Image
 from io import BytesIO
 
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--user", type=int, default="1",
