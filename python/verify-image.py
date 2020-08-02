@@ -62,6 +62,7 @@ def load_key():
 
 def main():
     try:
+        # making the connection with our database
         file = open('./../credentials.txt')
         line = file.read()
         con = psycopg2.connect(database='postgres', user='postgres', port = "5432",
@@ -105,8 +106,12 @@ def main():
                 decrypted_aadhar_number = f.decrypt(binary_aadhar_text)
                 if int(decrypted_aadhar_number.decode()) == aadhar:
                     return item
+                    
 
         user = find_user(items)
+        if user == None:
+            print("Person with this aadhar is not found.")
+            return
         id = user[0]
 
 

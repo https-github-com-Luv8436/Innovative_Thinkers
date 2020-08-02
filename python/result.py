@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import argparse
+#import argparse
 import psycopg2
 import sys
 from cryptography.fernet import Fernet
 
-parser = argparse.ArgumentParser()
+#parser = argparse.ArgumentParser()
 
-parser.add_argument("--constituency", type=int, default="0" ,
+#parser.add_argument("--constituency", type=int, default="0" ,
 					help="constituency for which you want to display results.")
 
 args = parser.parse_args()
@@ -31,12 +31,6 @@ def main():
 
         cur = con.cursor()
         
-        cur.execute("SELECT COUNT(*) FROM sih_database ")
-        item = cur.fetchone()
-        if item == None:
-            print("No voter found in database.")
-            return
-        print("Total numbers of voters registered into the main database: ", item[0])
 
         party1 = 0
         party2 = 0
@@ -49,6 +43,9 @@ def main():
 
         cur.execute("SELECT * FROM sih_database")
         items = cur.fetchall()
+        if items == None:
+            print("No voter found in the database.")
+            return
 
         for item in items:
             decrypted_status = f.decrypt(item[4].encode())
