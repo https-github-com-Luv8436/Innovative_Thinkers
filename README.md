@@ -45,6 +45,8 @@ python insert-image.py --user=1 --aadhar_number=206201810454 --constituency=100
 
 # For verification of iris taken by camera or casting the vote
 python verify-image.py --file=./../CASIA1/1/001_2_4.jpg
+
+
 ./../CASIA1/1/001_2_4.jpg is the file path of the image of the voter which we are getting from the camera.
 
 # For displaying the results 
