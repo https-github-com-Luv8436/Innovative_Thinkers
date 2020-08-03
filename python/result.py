@@ -33,10 +33,6 @@ def main():
         cur = con.cursor()
         
 
-        party1 = 0
-        party2 = 0
-        party3 = 0
-        party4 = 0
         votes_casted = 0
 
         key = load_key()
@@ -48,30 +44,56 @@ def main():
             print("No voter found in the database.")
             return
 
+        constituency_data = dict()
         for item in items:
-            decrypted_status = f.decrypt(item[4].encode())
-            decrypted_status_string = decrypted_status.decode()
+            decrypted_status_string = f.decrypt(item[4].encode()).decode()
+            decrypted_constituency = f.decrypt(item[2].encode())
             if decrypted_status_string == 'True':
-                votes_casted +=1
-                constituency = f.decrypt(item[2].encode())
-                if int(constituency.decode())==0:
-                    party = int(f.decrypt(item[3].encode()))
-                    if party==1:
-                        party1 += 1
-                    elif party==2:
-                        party2 += 1
-                    elif party==3:
-                        party3 += 1
-                    elif party==4:
-                        party4 += 1
+                votes_casted += 1
+                decoded_constituency = decrypted_constituency.decode()
+                constituency = int(decoded_constituency)
+                if constituency not in constituency_data:
+                    constituency_data[constituency]=[0 , 0 , 0]
+                party = int(f.decrypt(item[3].encode()).decode())
+                if party==1:
+                    constituency_data[constituency][0] += 1
+                elif party==2:
+                    constituency_data[constituency][1] += 1
+                elif party==3:
+                    constituency_data[constituency][2] += 1
+
+        print(votes_casted,"voters has successfully casted their votes.")
+
+        for data in constituency_data:
+            print("party 1 has got",constituency_data[data][0],"votes from",data,"constituency")
+            print("party 2 has got",constituency_data[data][1],"votes from",data,"constituency")
+            print("party 3 has got",constituency_data[data][2],"votes from",data,"constituency")
+
+                    
 
 
-        print("Total number of voters from constituency",args.constituency ,"casted their votes:",votes_casted)
-        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 1:",party1)
-        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 2:",party2)
-        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 3:",party3)
-        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 4:",party4)     
 
+#        for item in items:
+#            decrypted_status = f.decrypt(item[4].encode())
+#            decrypted_status_string = decrypted_status.decode()
+#            if decrypted_status_string == 'True':
+#                votes_casted +=1
+#                constituency = f.decrypt(item[2].encode())
+#                if int(constituency.decode())==0:
+#                    party = f.decrypt(item[3].encode())
+#                    if int(party.decode())==1:
+#                        party1 += 1
+#                    elif int(party.decode())==2:
+#                        party2 += 1
+#                    elif int(party.decode())==3:
+#                        party3 += 1
+
+
+#        print("Total number of voters from constituency",args.constituency ,"casted their votes:",votes_casted)
+#        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 1:",party1)
+#        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 2:",party2)
+#        print("Total number of voters from constituency",args.constituency ,"casted their votes to party number 3:",party3)
+        
 
         con.commit()
 

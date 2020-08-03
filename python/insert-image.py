@@ -16,13 +16,13 @@ parser.add_argument("--user", type=int, default="1",
 parser.add_argument("--aadhar_number", type=str, default="206201810454",
 					help="Aadhar number of user.")
 
-parser.add_argument("--party_number", type=int, default=0,
+parser.add_argument("--party_number", type=int, default=-1,
 					help="party number which voter has voted")
 
 parser.add_argument("--status", type=bool, default=False,
 					help="voter casted the vote or not")
 
-parser.add_argument("--constituency", type=int, default="0",
+parser.add_argument("--constituency", type=int, default="100",
 					help="constituency of the voter from where he has casted the vote")
 
 

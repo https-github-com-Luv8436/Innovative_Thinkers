@@ -3,7 +3,7 @@ import boto3
 
 def aadhar():
     # Document
-    documentName = r'C:\Users\luvku\Pictures\121.jpg'
+    documentName = r'./aadhar/121.jpg'
 
     # Read document content
     with open(documentName, 'rb') as document:
