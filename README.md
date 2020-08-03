@@ -36,16 +36,18 @@ Team Name:- Innovative Thinkers
 7. It also saves the time and efforts of army person.
 
 
-#Technical details and implementation of our project 
+# Technical details and implementation of our project 
 
-#To register an specific voter on the database
+# To register an specific voter on the database
 python insert-image.py --user=1 --aadhar_number=206201810454 --constituency=100
 
-#For verification of iris taken by camera or casting the vote
+
+
+# For verification of iris taken by camera or casting the vote
 python verify-image.py --file=./../CASIA1/1/001_2_4.jpg
 ./../CASIA1/1/001_2_4.jpg is the file path of the image of the voter which we are getting from the camera.
 
-#For displaying the results 
+# For displaying the results 
 python result.py
 This shows the results of the election constituency wise that which party gets how many number of votes from which constituency.
 
